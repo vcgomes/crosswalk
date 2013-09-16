@@ -60,7 +60,16 @@ void XWalkExtensionServer::OnCreateInstance(int64_t instance_id,
   instance->SetPostMessageCallback(
       base::Bind(&XWalkExtensionServer::PostMessageToJSCallback,
                  base::Unretained(this), instance_id));
-  instances_[instance_id] = instance;
+
+  instance->SetSendSyncReplyCallback(
+      base::Bind(&XWalkExtensionServer::SendSyncReplyToJSCallback,
+                 base::Unretained(this), instance_id));
+
+  InstanceContext* context = new InstanceContext;
+  context->instance = instance;
+  context->pending_reply = NULL;
+
+  instances_[instance_id] = context;
 }
 
 void XWalkExtensionServer::OnPostMessageToNative(int64_t instance_id,
@@ -72,6 +81,8 @@ void XWalkExtensionServer::OnPostMessageToNative(int64_t instance_id,
     return;
   }
 
+  InstanceContext* context = it->second;
+
   // The const_cast is needed to remove the only Value contained by the
   // ListValue (which is solely used as wrapper, since Value doesn't
   // have param traits for serialization) and we pass the ownership to to
@@ -80,7 +91,7 @@ void XWalkExtensionServer::OnPostMessageToNative(int64_t instance_id,
   // can be costly depending on the size of Value.
   base::Value* value;
   const_cast<base::ListValue*>(&msg)->Remove(0, &value);
-  it->second->HandleMessage(scoped_ptr<base::Value>(value));
+  context->instance->HandleMessage(scoped_ptr<base::Value>(value));
 }
 
 void XWalkExtensionServer::Initialize(IPC::Sender* sender) {
@@ -156,8 +167,7 @@ void XWalkExtensionServer::PostMessageToJSCallback(
 }
 
 void XWalkExtensionServer::SendSyncReplyToJSCallback(
-    int64_t instance_id, IPC::Message* ipc_reply,
-    scoped_ptr<base::Value> reply) {
+    int64_t instance_id, scoped_ptr<base::Value> reply) {
 
   InstanceMap::const_iterator it = instances_.find(instance_id);
   if (it == instances_.end()) {
@@ -166,14 +176,19 @@ void XWalkExtensionServer::SendSyncReplyToJSCallback(
     return;
   }
 
-  XWalkExtensionInstance *instance = it->second;
+  InstanceContext* context = it->second;
+  if (!context->pending_reply) {
+    LOG(WARNING) << "There's no pending SyncMessage for instance id: "
+                 << instance_id;
+    return;
+  }
 
   base::ListValue wrapped_reply;
   wrapped_reply.Append(reply.release());
-  IPC::WriteParam(ipc_reply, wrapped_reply);
-  Send(ipc_reply);
+  IPC::WriteParam(context->pending_reply, wrapped_reply);
+  Send(context->pending_reply);
 
-  instance->SetSendSyncReplyCallback(XWalkExtension::SendSyncReplyCallback());
+  context->pending_reply = NULL;
 }
 
 void XWalkExtensionServer::OnSendSyncMessageToNative(int64_t instance_id,
@@ -185,6 +200,15 @@ void XWalkExtensionServer::OnSendSyncMessageToNative(int64_t instance_id,
     return;
   }
 
+  InstanceContext* context = it->second;
+  if (context->pending_reply) {
+    LOG(WARNING) << "There's already a pending Sync Message for Extension instance id: "
+                 << instance_id;
+    return;
+  }
+
+  context->pending_reply = ipc_reply;
+
   // The const_cast is needed to remove the only Value contained by the
   // ListValue (which is solely used as wrapper, since Value doesn't
   // have param traits for serialization) and we pass the ownership to to
@@ -193,10 +217,7 @@ void XWalkExtensionServer::OnSendSyncMessageToNative(int64_t instance_id,
   // can be costly depending on the size of Value.
   base::Value* value;
   const_cast<base::ListValue*>(&msg)->Remove(0, &value);
-  XWalkExtensionInstance* instance = it->second;
-
-  instance->SetSendSyncReplyCallback(base::Bind(&XWalkExtensionServer::SendSyncReplyToJSCallback,
-                                                base::Unretained(this), instance_id, ipc_reply));
+  XWalkExtensionInstance* instance = context->instance;
 
   instance->HandleSyncMessage(scoped_ptr<base::Value>(value));
 }
@@ -208,7 +229,9 @@ void XWalkExtensionServer::OnDestroyInstance(int64_t instance_id) {
     return;
   }
 
-  delete it->second;
+  InstanceContext *context = it->second;
+
+  delete context->instance;
   instances_.erase(it);
 
   Send(new XWalkExtensionClientMsg_InstanceDestroyed(instance_id));
