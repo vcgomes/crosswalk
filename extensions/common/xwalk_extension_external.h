@@ -42,8 +42,7 @@ class XWalkExternalExtension : public XWalkExtension {
 
   virtual const char* GetJavaScriptAPI() OVERRIDE;
 
-  virtual XWalkExtensionInstance* CreateInstance(
-      const XWalkExtension::PostMessageCallback& post_message) OVERRIDE;
+  virtual XWalkExtensionInstance* CreateInstance() OVERRIDE;
 
   bool is_valid();
 
@@ -60,7 +59,6 @@ class XWalkExternalExtensionInstance : public XWalkExtensionInstance {
  public:
   XWalkExternalExtensionInstance(
       XWalkExternalExtension* external,
-      const XWalkExtension::PostMessageCallback& post_message,
       CXWalkExtensionContext* context);
   virtual ~XWalkExternalExtensionInstance();
 

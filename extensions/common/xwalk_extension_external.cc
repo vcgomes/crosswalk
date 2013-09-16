@@ -59,13 +59,12 @@ const char* XWalkExternalExtension::GetJavaScriptAPI() {
   return wrapped_->get_javascript(wrapped_);
 }
 
-XWalkExtensionInstance* XWalkExternalExtension::CreateInstance(
-      const XWalkExtension::PostMessageCallback& post_message) {
+XWalkExtensionInstance* XWalkExternalExtension::CreateInstance() {
   CXWalkExtensionContext* context = wrapped_->context_create(wrapped_);
   if (!context)
     return NULL;
 
-  return new XWalkExternalExtensionInstance(this, post_message, context);
+  return new XWalkExternalExtensionInstance(this, context);
 }
 
 void XWalkExternalExtension::Initialize() {
@@ -85,10 +84,8 @@ void XWalkExternalExtension::Initialize() {
 
 XWalkExternalExtensionInstance::XWalkExternalExtensionInstance(
       XWalkExternalExtension* extension,
-      const XWalkExtension::PostMessageCallback& post_message,
       CXWalkExtensionContext* context)
       : context_(context) {
-  SetPostMessageCallback(post_message);
   context->internal_data = this;
   context->api = GetAPIWrappers();
 }
