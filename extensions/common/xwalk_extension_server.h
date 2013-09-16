@@ -65,6 +65,10 @@ class XWalkExtensionServer : public IPC::Listener {
   void PostMessageToJSCallback(int64_t instance_id,
                                scoped_ptr<base::Value> msg);
 
+  void SendSyncReplyToJSCallback(int64_t instance_id,
+                                 IPC::Message* ipc_reply,
+                                 scoped_ptr<base::Value> reply);
+
   base::Lock sender_lock_;
   IPC::Sender* sender_;
 

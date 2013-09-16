@@ -125,28 +125,22 @@ void XWalkExternalExtensionInstance::HandleMessage(
     context_->handle_message(context_, string_msg.c_str());
 }
 
-scoped_ptr<base::Value>
-XWalkExternalExtensionInstance::HandleSyncMessage(
+void XWalkExternalExtensionInstance::HandleSyncMessage(
     scoped_ptr<base::Value> msg) {
   if (!context_->handle_sync_message) {
     LOG(WARNING) << "Ignoring sync message sent for external extension "
                  << "which doesn't support it.";
-    return scoped_ptr<base::Value>(base::Value::CreateNullValue());
+    return;
   }
-  CHECK(sync_reply_.empty());
 
   std::string string_msg;
   msg->GetAsString(&string_msg);
 
   context_->handle_sync_message(context_, string_msg.c_str());
-  scoped_ptr<base::Value> reply(new base::StringValue(sync_reply_));
-  sync_reply_.clear();
-
-  return reply.Pass();
 }
 
 void XWalkExternalExtensionInstance::SetSyncReply(const char* reply) {
-  sync_reply_ = reply;
+  SendSyncReplyToJS(scoped_ptr<base::Value>(new base::StringValue(reply)));
 }
 
 XWalkExternalExtensionInstance::~XWalkExternalExtensionInstance() {

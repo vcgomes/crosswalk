@@ -155,6 +155,27 @@ void XWalkExtensionServer::PostMessageToJSCallback(
   Send(new XWalkExtensionClientMsg_PostMessageToJS(instance_id, wrapped_msg));
 }
 
+void XWalkExtensionServer::SendSyncReplyToJSCallback(
+    int64_t instance_id, IPC::Message* ipc_reply,
+    scoped_ptr<base::Value> reply) {
+
+  InstanceMap::const_iterator it = instances_.find(instance_id);
+  if (it == instances_.end()) {
+    LOG(WARNING) << "Can't SendSyncMessage to invalid Extension instance id: "
+                 << instance_id;
+    return;
+  }
+
+  XWalkExtensionInstance *instance = it->second;
+
+  base::ListValue wrapped_reply;
+  wrapped_reply.Append(reply.release());
+  IPC::WriteParam(ipc_reply, wrapped_reply);
+  Send(ipc_reply);
+
+  instance->SetSendSyncReplyCallback(XWalkExtension::SendSyncReplyCallback());
+}
+
 void XWalkExtensionServer::OnSendSyncMessageToNative(int64_t instance_id,
     const base::ListValue& msg, IPC::Message* ipc_reply) {
   InstanceMap::const_iterator it = instances_.find(instance_id);
@@ -172,13 +193,12 @@ void XWalkExtensionServer::OnSendSyncMessageToNative(int64_t instance_id,
   // can be costly depending on the size of Value.
   base::Value* value;
   const_cast<base::ListValue*>(&msg)->Remove(0, &value);
-  scoped_ptr<base::Value> reply(
-      it->second->HandleSyncMessage(scoped_ptr<base::Value>(value)));
+  XWalkExtensionInstance* instance = it->second;
 
-  base::ListValue wrapped_reply;
-  wrapped_reply.Append(reply.release());
-  IPC::WriteParam(ipc_reply, wrapped_reply);
-  Send(ipc_reply);
+  instance->SetSendSyncReplyCallback(base::Bind(&XWalkExtensionServer::SendSyncReplyToJSCallback,
+                                                base::Unretained(this), instance_id, ipc_reply));
+
+  instance->HandleSyncMessage(scoped_ptr<base::Value>(value));
 }
 
 void XWalkExtensionServer::OnDestroyInstance(int64_t instance_id) {
