@@ -47,10 +47,10 @@ class XWalkExtensionClient : public IPC::Listener {
 
   void Initialize(IPC::Sender* sender) { sender_ = sender; }
 
- private:
   XWalkRemoteExtensionRunner* CreateRunner(const std::string& extension_name,
       XWalkRemoteExtensionRunner::Client* client);
 
+ private:
   bool Send(IPC::Message* msg);
 
   // Message Handlers.

@@ -6,6 +6,8 @@
 
 #include "base/logging.h"
 #include "base/stl_util.h"
+#include "v8/include/v8.h"
+#include "xwalk/extensions/renderer/xwalk_extension_client.h"
 #include "xwalk/extensions/renderer/xwalk_extension_module.h"
 
 namespace xwalk {
@@ -125,14 +127,20 @@ void XWalkModuleSystem::RegisterExtensionModule(
     scoped_ptr<XWalkExtensionModule> module) {
   const std::string& extension_name = module->extension_name();
   CHECK(extension_modules_.find(extension_name) == extension_modules_.end());
-  // TODO(cmarcelo): Setup lazy loader instead of immediatly running
-  // JS API code.
-  v8::Isolate* isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope handle_scope(isolate);
-  v8::Handle<v8::FunctionTemplate> require_native_template =
-      v8::Handle<v8::FunctionTemplate>::New(isolate, require_native_template_);
-  module->LoadExtensionCode(GetV8Context(),
-                            require_native_template->GetFunction());
+
+  // FIXME: remove this when the trampoline calculator is functional.
+  if (extension_name.find('.') == std::string::npos) {
+    InstallLazyLoader(module.get());
+  } else {
+    v8::Isolate* isolate = v8::Isolate::GetCurrent();
+    v8::HandleScope handle_scope(isolate);
+    v8::Handle<v8::FunctionTemplate> require_native_template =
+        v8::Handle<v8::FunctionTemplate>::New(isolate,
+                                              require_native_template_);
+    module->LoadExtensionCode(GetV8Context(),
+                              require_native_template->GetFunction());
+  }
+
   extension_modules_[extension_name] = module.release();
 }
 
@@ -149,6 +157,15 @@ void XWalkModuleSystem::RegisterNativeModule(
   native_modules_[name] = module.release();
 }
 
+void XWalkModuleSystem::InstallLazyLoader(XWalkExtensionModule *module) {
+  // FIXME: don't use the global context
+  v8::Handle<v8::Object> object = GetV8Context()->Global();
+
+  // FIXME: use a proper entry point, instead of the extension name.
+  object->SetAccessor(v8::String::New(module->extension_name().c_str()), LazyLoader,
+                      0, v8::External::New(module));
+}
+
 v8::Handle<v8::Object> XWalkModuleSystem::RequireNative(
     const std::string& name) {
   NativeModuleMap::iterator it = native_modules_.find(name);
@@ -159,6 +176,35 @@ v8::Handle<v8::Object> XWalkModuleSystem::RequireNative(
 
 v8::Handle<v8::Context> XWalkModuleSystem::GetV8Context() {
   return v8::Handle<v8::Context>::New(v8::Isolate::GetCurrent(), v8_context_);
+}
+
+// static
+void XWalkModuleSystem::LazyLoader(
+    v8::Local<v8::String> property,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  void* ptr = info.Data().As<v8::External>()->Value();
+  XWalkExtensionModule* module = static_cast<XWalkExtensionModule*>(ptr);
+
+  if (!module)
+    return;
+
+  v8::Handle<v8::Object> holder = info.Holder();
+
+  // Delete the trampolines, as we will load the extension proper.
+  holder->ForceDelete(v8::String::New(module->extension_name().c_str()));
+
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Handle<v8::Context> context = isolate->GetCurrentContext();
+  XWalkModuleSystem *module_system = GetModuleSystemFromContext(context);
+
+  v8::Handle<v8::FunctionTemplate> require_native_template =
+        v8::Handle<v8::FunctionTemplate>::New(
+            isolate,
+            module_system->require_native_template_);
+
+  module->LoadExtensionCode(module_system->GetV8Context(),
+                            require_native_template->GetFunction());
+  info.GetReturnValue().Set(holder->Get(property));
 }
 
 }  // namespace extensions

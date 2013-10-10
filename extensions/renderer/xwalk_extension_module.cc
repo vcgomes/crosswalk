@@ -12,6 +12,7 @@
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "xwalk/extensions/renderer/xwalk_module_system.h"
+#include "xwalk/extensions/renderer/xwalk_extension_client.h"
 #include "xwalk/extensions/renderer/xwalk_v8_utils.h"
 
 namespace xwalk {
@@ -32,7 +33,9 @@ XWalkExtensionModule::XWalkExtensionModule(
     : extension_name_(extension_name),
       extension_code_(extension_code),
       converter_(content::V8ValueConverter::create()),
-      module_system_(module_system) {
+      module_system_(module_system),
+      runner_(NULL) {
+
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
   v8::HandleScope handle_scope(isolate);
   v8::Handle<v8::Object> function_data = v8::Object::New();
@@ -75,8 +78,8 @@ XWalkExtensionModule::~XWalkExtensionModule() {
   message_listener_.Dispose();
   message_listener_.Clear();
 
-  CHECK(runner_);
-  runner_->Destroy();
+  if (runner_)
+    runner_->Destroy();
 }
 
 namespace {
@@ -141,6 +144,9 @@ v8::Handle<v8::Value> RunString(const std::string& code,
 
 void XWalkExtensionModule::LoadExtensionCode(
     v8::Handle<v8::Context> context, v8::Handle<v8::Function> requireNative) {
+
+  set_runner(client_->CreateRunner(extension_name(), this));
+
   std::string wrapped_api_code = WrapAPICode(extension_code_, extension_name_);
   v8::Handle<v8::Value> result =
       RunString(wrapped_api_code, "JS API code for " + extension_name_);

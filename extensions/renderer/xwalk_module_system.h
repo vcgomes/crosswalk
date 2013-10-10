@@ -54,6 +54,11 @@ class XWalkModuleSystem {
   v8::Handle<v8::Context> GetV8Context();
 
  private:
+  void InstallLazyLoader(XWalkExtensionModule *module);
+
+  static void LazyLoader(v8::Local<v8::String> property,
+                  const v8::PropertyCallbackInfo<v8::Value>& info);
+
   typedef std::map<std::string, XWalkExtensionModule*> ExtensionModuleMap;
   ExtensionModuleMap extension_modules_;
 
@@ -68,6 +73,8 @@ class XWalkModuleSystem {
   // JavaScript. When WillReleaseScriptContext() is called, we dispose this
   // persistent.
   v8::Persistent<v8::Context> v8_context_;
+
+  friend class XWalkExtensionModule;
 
   DISALLOW_COPY_AND_ASSIGN(XWalkModuleSystem);
 };

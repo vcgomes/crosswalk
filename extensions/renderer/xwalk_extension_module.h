@@ -6,6 +6,8 @@
 #define XWALK_EXTENSIONS_RENDERER_XWALK_EXTENSION_MODULE_H_
 
 #include <string>
+#include <list>
+#include "v8/include/v8.h"
 #include "xwalk/extensions/renderer/xwalk_module_system.h"
 #include "xwalk/extensions/renderer/xwalk_remote_extension_runner.h"
 
@@ -20,6 +22,7 @@ class V8ValueConverter;
 namespace xwalk {
 namespace extensions {
 
+class XWalkExtensionClient;
 class XWalkModuleSystem;
 
 // Responsible for running the JS code of a XWalkExtension. This includes
@@ -41,9 +44,8 @@ class XWalkExtensionModule : public XWalkRemoteExtensionRunner::Client {
                          v8::Handle<v8::Function> requireNative);
 
   std::string extension_name() const { return extension_name_; }
-  void set_runner(XWalkRemoteExtensionRunner* runner) {
-    runner_ = runner;
-  }
+
+  XWalkExtensionClient* client_;
 
  private:
   // XWalkRemoteExtensionRunner::Client implementation.
@@ -60,6 +62,13 @@ class XWalkExtensionModule : public XWalkRemoteExtensionRunner::Client {
   static XWalkExtensionModule* GetExtensionModule(
       const v8::FunctionCallbackInfo<v8::Value>& info);
 
+  static void LazyLoader(v8::Local<v8::String> property,
+                  const v8::PropertyCallbackInfo<v8::Value>& info);
+
+  void set_runner(XWalkRemoteExtensionRunner* runner) {
+    runner_ = runner;
+  }
+
   // Template for the 'extension' object exposed to the extension JS code.
   v8::Persistent<v8::ObjectTemplate> object_template_;
 
@@ -70,6 +79,8 @@ class XWalkExtensionModule : public XWalkRemoteExtensionRunner::Client {
   // Function to be called when the extension sends a message to its JS code.
   // This value is registered by using 'extension.setMessageListener()'.
   v8::Persistent<v8::Function> message_listener_;
+
+  v8::Handle<v8::Function> require_native_;
 
   std::string extension_name_;
   std::string extension_code_;

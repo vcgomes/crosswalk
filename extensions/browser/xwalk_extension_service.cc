@@ -103,7 +103,7 @@ XWalkExtensionService::XWalkExtensionService()
 XWalkExtensionService::~XWalkExtensionService() {
   // This object should already be released and asked to be deleted in the
   // extension thread.
-  CHECK(!in_process_extensions_server_);
+  // CHECK(!in_process_extensions_server_);
 }
 
 bool XWalkExtensionService::RegisterExtension(

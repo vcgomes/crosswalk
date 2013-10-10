@@ -114,14 +114,17 @@ void XWalkExtensionClient::CreateRunnersForModuleSystem(XWalkModuleSystem*
     module_system) {
   // FIXME(cmarcelo): Load extensions sorted by name so parent comes first, so
   // that we can safely register all them.
+
   ExtensionAPIMap::const_iterator it = extension_apis_.begin();
   for (; it != extension_apis_.end(); ++it) {
     if (it->second.empty())
       continue;
+
+    // FIXME: Pass the list of entry points instead of a list of one element
+    // to the module constructor (entry points).
     scoped_ptr<XWalkExtensionModule> module(
         new XWalkExtensionModule(module_system, it->first, it->second));
-    XWalkRemoteExtensionRunner* runner = CreateRunner(it->first, module.get());
-    module->set_runner(runner);
+    module->client_ = this;
     module_system->RegisterExtensionModule(module.Pass());
   }
 }
