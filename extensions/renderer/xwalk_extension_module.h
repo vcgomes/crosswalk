@@ -6,6 +6,8 @@
 #define XWALK_EXTENSIONS_RENDERER_XWALK_EXTENSION_MODULE_H_
 
 #include <string>
+#include <list>
+#include "v8/include/v8.h"
 #include "xwalk/extensions/renderer/xwalk_extension_client.h"
 #include "xwalk/extensions/renderer/xwalk_module_system.h"
 
@@ -58,6 +60,9 @@ class XWalkExtensionModule : public XWalkExtensionClient::InstanceHandler {
 
   static XWalkExtensionModule* GetExtensionModule(
       const v8::FunctionCallbackInfo<v8::Value>& info);
+
+  static void LazyLoader(v8::Local<v8::String> property,
+                  const v8::PropertyCallbackInfo<v8::Value>& info);
 
   // Template for the 'extension' object exposed to the extension JS code.
   v8::Persistent<v8::ObjectTemplate> object_template_;
