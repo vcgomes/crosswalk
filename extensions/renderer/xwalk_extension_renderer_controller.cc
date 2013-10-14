@@ -58,10 +58,7 @@ void CreateRunnersForModuleSystem(XWalkExtensionClient* client,
     if (it->second.empty())
       continue;
     scoped_ptr<XWalkExtensionModule> module(
-        new XWalkExtensionModule(module_system, it->first, it->second));
-    XWalkRemoteExtensionRunner* runner =
-        client->CreateRunner(it->first, module.get());
-    module->set_runner(runner);
+        new XWalkExtensionModule(client, module_system, it->first, it->second));
     module_system->RegisterExtensionModule(module.Pass());
   }
 }
