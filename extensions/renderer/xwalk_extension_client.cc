@@ -70,6 +70,14 @@ void XWalkExtensionClient::OnPostMessageToJS(int64_t instance_id,
   it->second->HandleMessageFromNative(*value);
 }
 
+void XWalkExtensionClient::OnRegisterExtension(
+    const std::string& name,
+    const std::string& api,
+    const base::ListValue& entry_points) {
+  struct ExtensionCodePoints codepoint = { api, entry_points.DeepCopy() };
+  extension_apis_[name] = codepoint;
+}
+
 void XWalkExtensionClient::DestroyInstance(int64_t instance_id) {
   HandlerMap::iterator it = handlers_.find(instance_id);
   if (it == handlers_.end() || !it->second) {
