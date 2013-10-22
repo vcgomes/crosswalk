@@ -93,7 +93,7 @@ class XWalkExtensionsContextDestructionTest : public XWalkExtensionsTestBase {
   // won't have an instance created for them.
   virtual void TearDown() OVERRIDE {
     SPIN_FOR_1_SECOND_OR_UNTIL_TRUE(g_contexts_destroyed >= 2);
-    ASSERT_GT(g_contexts_destroyed, 2);
+    ASSERT_GE(g_contexts_destroyed, 2);
   }
 };
 
@@ -118,5 +118,5 @@ IN_PROC_BROWSER_TEST_F(XWalkExtensionsContextDestructionTest,
   }
 
   // FIXME(cmarcelo): See comment in TearDown().
-  ASSERT_GT(g_contexts_created, 2);
+  ASSERT_GE(g_contexts_created, 2);
 }
