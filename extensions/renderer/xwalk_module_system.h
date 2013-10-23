@@ -75,12 +75,32 @@ class XWalkModuleSystem {
                          const ExtensionModuleEntry& second);
   };
 
+  static bool SetTrampolineAccessorForEntryPoint(
+      v8::Handle<v8::Context> context,
+      std::string entry_point,
+      v8::Local<v8::External> user_data);
+
+  static bool DeleteAccessorForEntryPoint(v8::Handle<v8::Context> context,
+                                          const std::string& entry_point);
+
+  bool InstallTrampoline(v8::Handle<v8::Context> context,
+                         ExtensionModuleEntry* entry);
+
+  static void TrampolineCallback(
+      v8::Local<v8::String> property,
+      const v8::PropertyCallbackInfo<v8::Value>& info);
+
   bool ContainsExtensionModule(const std::string& name);
   void MarkModulesWithTrampoline();
   void DeleteExtensionModules();
 
   typedef std::vector<ExtensionModuleEntry> ExtensionModules;
   ExtensionModules extension_modules_;
+
+  void InstallLazyLoader(XWalkExtensionModule *module);
+
+  static void LazyLoader(v8::Local<v8::String> property,
+                  const v8::PropertyCallbackInfo<v8::Value>& info);
 
   typedef std::map<std::string, XWalkNativeModule*> NativeModuleMap;
   NativeModuleMap native_modules_;
