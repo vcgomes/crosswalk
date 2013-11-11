@@ -132,6 +132,11 @@
           '../base/allocator/allocator.gyp:allocator',
         ],
       }],
+      ['OS=="linux"', {
+        'dependencies': [
+        '../build/linux/system.gyp:dbus',
+      ],
+     }],
       ['OS=="win"', {
         'sources': [
           'runtime/browser/ui/taskbar_util_browsertest.cc',

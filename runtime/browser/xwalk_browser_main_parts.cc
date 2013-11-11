@@ -268,6 +268,9 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
   xwalk::application::ApplicationService* service =
       system->application_service();
 
+  LOG(WARNING) << "system " << (system ? "Not NULL!" : "NULL!!");
+  LOG(WARNING) << "service " << (service ? "Not NULL!" : "NULL!!");
+
   CommandLine* command_line = CommandLine::ForCurrentProcess();
   if (!command_line->HasSwitch(switches::kInstall) &&
       !command_line->HasSwitch(switches::kUninstall)) {

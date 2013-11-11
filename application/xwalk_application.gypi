@@ -10,6 +10,8 @@
         '../sql/sql.gyp:sql',
         '../ui/ui.gyp:ui',
         '../url/url.gyp:url_lib',
+	'../dbus/dbus.gyp:dbus',
+        '../build/linux/system.gyp:dbus',
         '../third_party/WebKit/public/blink.gyp:blink',
         '../third_party/zlib/google/zip.gyp:zip',
         'xwalk_application_resources',
