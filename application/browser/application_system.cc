@@ -18,7 +18,7 @@ namespace {
 
 const std::string kServiceName("org.xwalk");
 const std::string kInterfaceName("org.xwalk.ApplicationLister1");
-const dbus::ObjectPath kListerObjectPath("/lister");
+const dbus::ObjectPath kListerObjectPath("/running");
 const std::string kListMethodName("List");
 
 }  // namespace
@@ -31,23 +31,29 @@ ApplicationLister::ApplicationLister(ApplicationService* service)
   dbus::Bus::Options options;
   options.dbus_task_runner = content::BrowserThread::GetMessageLoopProxyForThread(
       content::BrowserThread::IO);
-
   session_ = new dbus::Bus(options);
 
-  LOG(WARNING) << "session_ " << (session_ ? "Not NULL!" : "NULL!!");
-
-  lister_ = session_->GetExportedObject(kListerObjectPath);
-
-  LOG(WARNING) << "lister_ " << (lister_ ? "Not NULL!" : "NULL!!");
-
-  lister_->ExportMethod(
-      kServiceName, kListMethodName,
-      base::Bind(&ApplicationLister::List, base::Unretained(this)),
-      base::Bind(&ApplicationLister::OnExported, base::Unretained(this)));
+  session_->RequestOwnership(
+      kServiceName, dbus::Bus::REQUIRE_PRIMARY,
+      base::Bind(&ApplicationLister::OnNameOwned, base::Unretained(this)));
 }
 
 ApplicationLister::~ApplicationLister() {
   session_->ShutdownAndBlock();
+}
+
+void ApplicationLister::OnNameOwned(const std::string& name, bool success) {
+  if (!success) {
+    LOG(ERROR) << "Cound not own service name '" << name << "'.";
+    return;
+  }
+
+  lister_ = session_->GetExportedObject(kListerObjectPath);
+
+  lister_->ExportMethod(
+      kInterfaceName, kListMethodName,
+      base::Bind(&ApplicationLister::List, base::Unretained(this)),
+      base::Bind(&ApplicationLister::OnExported, base::Unretained(this)));
 }
 
 void ApplicationLister::List(

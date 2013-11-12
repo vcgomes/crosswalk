@@ -38,6 +38,8 @@ class ApplicationLister {
     LOG(WARNING) << "Exported in " << interface_name << ": " << success;
   }
 
+  void OnNameOwned(const std::string& name, bool success);
+
   ApplicationService* application_service_;
   dbus::ExportedObject* lister_;
   scoped_refptr<dbus::Bus> session_;
