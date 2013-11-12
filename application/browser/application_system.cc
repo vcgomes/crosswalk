@@ -5,7 +5,7 @@
 #include "base/bind.h"
 
 #include "xwalk/application/browser/application_system.h"
-
+#include "content/public/browser/browser_thread.h"
 #include "xwalk/application/browser/application_process_manager.h"
 #include "xwalk/application/browser/application_service.h"
 #include "xwalk/application/browser/application_store.h"
@@ -20,7 +20,6 @@ const std::string kServiceName("org.xwalk");
 const std::string kInterfaceName("org.xwalk.ApplicationLister1");
 const dbus::ObjectPath kListerObjectPath("/lister");
 const std::string kListMethodName("List");
-const dbus::Bus::Options kBusOptions;
 
 }  // namespace
 
@@ -29,7 +28,11 @@ namespace application {
 
 ApplicationLister::ApplicationLister(ApplicationService* service)
     : application_service_(service) {
-  session_ = new dbus::Bus(kBusOptions);
+  dbus::Bus::Options options;
+  options.dbus_task_runner = content::BrowserThread::GetMessageLoopProxyForThread(
+      content::BrowserThread::IO);
+
+  session_ = new dbus::Bus(options);
 
   LOG(WARNING) << "session_ " << (session_ ? "Not NULL!" : "NULL!!");
 
