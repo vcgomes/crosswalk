@@ -34,5 +34,29 @@
         'xwalkctl_main.c',
       ],
     },
+    {
+      'target_name': 'xwalk_launcher',
+      'type': 'executable',
+      'product_name': 'xwalk-launcher',
+      'conditions' : [
+        ['OS=="linux"', {
+          'dependencies': [
+            'gio',
+          ],
+        }],
+        ['tizen_mobile==1', {
+          'dependencies': [
+            'gio',
+            '../../../build/system.gyp:tizen_appcore_common'
+          ],
+        }],
+      ],
+      'include_dirs': [
+        '..',
+      ],
+      'sources': [
+        'xwalk_launcher_main.c',
+      ],
+    },
   ],
 }
