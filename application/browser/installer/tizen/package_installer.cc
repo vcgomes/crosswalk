@@ -15,9 +15,17 @@
 #include "base/files/file_enumerator.h"
 #include "base/logging.h"
 #include "base/path_service.h"
+#include "base/command_line.h"
+#include "base/process/launch.h"
 #include "third_party/libxml/chromium/libxml_utils.h"
 #include "xwalk/application/browser/application_storage.h"
 #include "xwalk/application/browser/installer/tizen/packageinfo_constants.h"
+
+namespace {
+
+const base::FilePath kPkgHelper("/usr/bin/xwalk-pkg-helper");
+
+}
 
 namespace info = xwalk::application_packageinfo_constants;
 
@@ -124,97 +132,45 @@ bool PackageInstaller::GeneratePkgInfoXml() {
   return true;
 }
 
-bool PackageInstaller::CopyOrLinkResources() {
-  base::FilePath icon = app_dir_.AppendASCII(icon_name_);
-  if (!icon_name_.empty() && base::PathExists(icon))
-    base::CopyFile(icon, icon_path_);
-
-  base::FilePath xwalk_path(info::kXwalkPath);
-  base::FilePath dir_exec(execute_path_.DirName());
-  if (!base::PathExists(dir_exec))
-    file_util::CreateDirectory(dir_exec);
-
-  file_util::CreateSymbolicLink(xwalk_path, execute_path_);
-  LOG(INFO) << "Copying and linking files into correct locations. [DONE]";
-  return true;
-}
-
-bool PackageInstaller::WriteToPackageInfoDB() {
-  uid_t uid;
-  gid_t gid;
-  struct passwd pwd;
-  char pwd_buffer[1024];
-  struct passwd *res;
-
-  getpwnam_r(info::kOwner, &pwd, pwd_buffer, sizeof(pwd_buffer), &res);
-  if (res == NULL) {
-    LOG(ERROR) << "Fail to get PW name";
-    return false;
-  }
-  uid = pwd.pw_uid;
-  gid = pwd.pw_gid;
-  if (!ChangeOwnerRecursive(data_dir_.Append(info::kAppDir), uid, gid) ||
-      !ChangeOwnerRecursive(data_dir_.Append(info::kAppDBPath), uid, gid) ||
-      !ChangeOwnerRecursive(
-          data_dir_.Append(info::kAppDBJournalPath), uid, gid))
-    return false;
-
-  if (access(xml_path_.MaybeAsASCII().c_str(), F_OK) != 0)
-    return false;
-  int result = pkgmgr_parser_parse_manifest_for_installation(
-      xml_path_.MaybeAsASCII().c_str(), NULL);
-  if (result != 0) {
-    LOG(ERROR) << "Manifest parser error: " << result;
-    return false;
-  }
-  LOG(INFO) << "Writing package information in database. [DONE]";
-  return true;
-}
-
 bool PackageInstaller::Install() {
-  return GeneratePkgInfoXml() &&
-      CopyOrLinkResources() &&
-      WriteToPackageInfoDB();
+  if (!GeneratePkgInfoXml())
+    return false;
+
+  CommandLine cmdline(kPkgHelper);
+  cmdline.AppendSwitch("--install");
+  cmdline.AppendArg(package_id_);
+  cmdline.AppendArgPath(xml_path_);
+  cmdline.AppendArgPath(icon_path_);
+
+  int exit_code;
+  std::string output;
+
+  if (!base::GetAppOutputWithExitCode(cmdline, &output, &exit_code)) {
+    LOG(ERROR) << "Could launch installer helper";
+    return false;
+  }
+
+  if (exit_code != 0) {
+    LOG(ERROR) << "Could not install application: " << exit_code;
+    return false;
+  }
+
+  return true;
 }
 
 bool PackageInstaller::Uninstall() {
-  bool success = true;
-  int result = pkgmgr_parser_parse_manifest_for_uninstallation(
-      xml_path_.MaybeAsASCII().c_str(), NULL);
-  if (result != 0) {
-    LOG(ERROR) << "Manifest parser error: " << result;
+  CommandLine cmdline(kPkgHelper);
+  cmdline.AppendSwitch("--uninstall");
+  cmdline.AppendArg(package_id_);
+
+  int exit_code;
+  std::string output;
+
+  if (!base::GetAppOutputWithExitCode(cmdline, &output, &exit_code)) {
+    LOG(ERROR) << "Could launch installer helper";
     return false;
   }
 
-  success &= base::DeleteFile(icon_path_, false);
-  success &= base::DeleteFile(execute_path_, false);
-  success &= base::DeleteFile(xml_path_, false);
-  if (!success)
-    return false;
-
-  LOG(INFO) << "Removing and unlinking files from installed locations. [DONE]";
-  return true;
-}
-
-bool PackageInstaller::ChangeOwnerRecursive(
-    const base::FilePath& path,
-    const uid_t& uid,
-    const gid_t& gid) {
-  if (lchown(path.MaybeAsASCII().c_str(), uid, gid) != 0) {
-    LOG(ERROR) << "Failed to change ownership of " << path.MaybeAsASCII();
-    return false;
-  }
-
-  base::FileEnumerator file_iter(
-      path,
-      true,
-      base::FileEnumerator::FILES|base::FileEnumerator::DIRECTORIES);
-  base::FilePath file(file_iter.Next());
-  while (!file.empty()) {
-    if (!ChangeOwnerRecursive(file, uid, gid))
-      return false;
-    file = file_iter.Next();
-  }
   return true;
 }
 
