@@ -83,8 +83,7 @@ bool PackageInstaller::Init() {
     LOG(WARNING) << "Fail to get application icon name.";
 
   icon_path_ = base::FilePath(info::kIconDir).AppendASCII(
-      package_id_ + info::kSeparator + stripped_name_ +
-      base::FilePath::FromUTF8Unsafe(icon_name_).Extension());
+      package_id_ + base::FilePath::FromUTF8Unsafe(icon_name_).Extension());
   return true;
 }
 
