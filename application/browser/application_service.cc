@@ -241,8 +241,10 @@ bool ApplicationService::Install(const base::FilePath& path, std::string* id) {
 #if defined(OS_TIZEN_MOBILE)
   if (!InstallPackageOnTizen(this, application_storage_,
                              application_data->ID(),
-                             runtime_context_->GetPath()))
+                             runtime_context_->GetPath())) {
+    application_storage_->RemoveApplication(application_data->ID());
     return false;
+  }
 #endif
 
   LOG(INFO) << "Installed application with id: " << application_data->ID()
@@ -265,16 +267,18 @@ bool ApplicationService::Install(const base::FilePath& path, std::string* id) {
 }
 
 bool ApplicationService::Uninstall(const std::string& id) {
+  bool result = true;
+
 #if defined(OS_TIZEN_MOBILE)
   if (!UninstallPackageOnTizen(this, application_storage_, id,
                                runtime_context_->GetPath()))
-    return false;
+    result = false;
 #endif
 
   if (!application_storage_->RemoveApplication(id)) {
     LOG(ERROR) << "Cannot uninstall application with id " << id
                << "; application is not installed.";
-    return false;
+    result = false;
   }
 
   const base::FilePath resources =
@@ -283,12 +287,12 @@ bool ApplicationService::Uninstall(const std::string& id) {
       !base::DeleteFile(resources, true)) {
     LOG(ERROR) << "Error occurred while trying to remove application with id "
                << id << "; Cannot remove all resources.";
-    return false;
+    result = false;
   }
 
   FOR_EACH_OBSERVER(Observer, observers_, OnApplicationUninstalled(id));
 
-  return true;
+  return result;
 }
 
 Application* ApplicationService::Launch(const std::string& id) {
