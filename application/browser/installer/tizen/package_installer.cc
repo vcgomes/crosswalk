@@ -135,6 +135,10 @@ bool PackageInstaller::Install() {
   if (!GeneratePkgInfoXml())
     return false;
 
+  LOG(WARNING) << "icon " << icon_path_.value();
+  LOG(WARNING) << "package id " << package_id_;
+  LOG(WARNING) << "xml " << xml_path_.value();
+
   CommandLine cmdline(kPkgHelper);
   cmdline.AppendSwitch("--install");
   cmdline.AppendArg(package_id_);
