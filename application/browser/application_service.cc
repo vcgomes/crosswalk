@@ -134,11 +134,6 @@ bool InstallPackageOnTizen(xwalk::application::ApplicationService* service,
                            xwalk::application::ApplicationStorage* storage,
                            const std::string& app_id,
                            const base::FilePath& data_dir) {
-  // FIXME(cmarcelo): The Tizen-specific steps of installation in
-  // service mode are not supported yet. Remove when this is fixed.
-  if (xwalk::XWalkRunner::GetInstance()->is_running_as_service())
-    return true;
-
   scoped_ptr<xwalk::application::PackageInstaller> installer =
       xwalk::application::PackageInstaller::Create(service, storage,
                                                    app_id, data_dir);
@@ -153,11 +148,6 @@ bool UninstallPackageOnTizen(xwalk::application::ApplicationService* service,
                              xwalk::application::ApplicationStorage* storage,
                              const std::string& app_id,
                              const base::FilePath& data_dir) {
-  // FIXME(cmarcelo): The Tizen-specific steps of installation in
-  // service mode are not supported yet. Remove when this is fixed.
-  if (xwalk::XWalkRunner::GetInstance()->is_running_as_service())
-    return true;
-
   scoped_ptr<xwalk::application::PackageInstaller> installer =
       xwalk::application::PackageInstaller::Create(service, storage,
                                                    app_id, data_dir);
