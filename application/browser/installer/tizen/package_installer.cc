@@ -150,7 +150,8 @@ bool PackageInstaller::Install() {
   }
 
   if (exit_code != 0) {
-    LOG(ERROR) << "Could not install application: " << exit_code;
+    LOG(ERROR) << "Could not install application: "
+               << output << " (" << exit_code << ")";
     return false;
   }
 
@@ -167,6 +168,12 @@ bool PackageInstaller::Uninstall() {
 
   if (!base::GetAppOutputWithExitCode(cmdline, &output, &exit_code)) {
     LOG(ERROR) << "Could launch installer helper";
+    return false;
+  }
+
+  if (exit_code != 0) {
+    LOG(ERROR) << "Could not uninstall application: "
+               << output << " (" << exit_code << ")";
     return false;
   }
 
