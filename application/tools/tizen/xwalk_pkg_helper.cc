@@ -64,7 +64,7 @@ bool InstallApplication(const char* appid, const char* xmlpath,
   // FIXME(vcgomes): Add support for more icon types
   base::FilePath icon_dst = kIconDir.Append(std::string(appid) + ".png");
   if (!base::CopyFile(icon_src, icon_dst)) {
-    fprintf(stderr, "Couldn't copy application icon to '%s'\n",
+    fprintf(stdout, "Couldn't copy application icon to '%s'\n",
             icon_dst.value().c_str());
     return false;
   }
@@ -74,7 +74,7 @@ bool InstallApplication(const char* appid, const char* xmlpath,
   base::FilePath xml_src(xmlpath);
   base::FilePath xml_dst = kXmlDir.Append(std::string(appid) + ".xml");
   if (!base::CopyFile(xml_src, xml_dst)) {
-    fprintf(stderr, "Couldn't copy application XML metadata to '%s'\n",
+    fprintf(stdout, "Couldn't copy application XML metadata to '%s'\n",
             xml_dst.value().c_str());
     return false;
   }
@@ -83,7 +83,7 @@ bool InstallApplication(const char* appid, const char* xmlpath,
 
   base::FilePath appdir = kApplicationsDir.Append(appid);
   if (!file_util::CreateDirectoryAndGetError(appdir, NULL)) {
-    fprintf(stderr, "Couldn't create application directory '%s'\n",
+    fprintf(stdout, "Couldn't create application directory '%s'\n",
             appdir.value().c_str());
     return false;
   }
@@ -92,13 +92,13 @@ bool InstallApplication(const char* appid, const char* xmlpath,
 
   base::FilePath applink = appdir.Append("/bin");
   if (!file_util::CreateSymbolicLink(kXWalkLauncherBinary, applink)) {
-    fprintf(stderr, "Couldn't create link to Crosswalk '%s'\n",
+    fprintf(stdout, "Couldn't create link to Crosswalk '%s'\n",
             applink.value().c_str());
     return false;
   }
 
   if (pkgmgr_parser_parse_manifest_for_installation(xmlpath, NULL)) {
-    fprintf(stderr, "Couldn't parse manifest XML '%s'\n", xmlpath);
+    fprintf(stdout, "Couldn't parse manifest XML '%s'\n", xmlpath);
     return false;
   }
 
@@ -116,7 +116,7 @@ bool UninstallApplication(const char* appid) {
   // FIXME(vcgomes): Add support for more icon types
   base::FilePath icon_dst = kIconDir.Append(std::string(appid) + ".png");
   if (!base::DeleteFile(icon_dst, false)) {
-    fprintf(stderr, "Couldn't delete '%s'\n", icon_dst.value().c_str());
+    fprintf(stdout, "Couldn't delete '%s'\n", icon_dst.value().c_str());
     result = false;
   }
 
@@ -126,19 +126,19 @@ bool UninstallApplication(const char* appid) {
   result = pkgmgr_parser_parse_manifest_for_uninstallation(
       xmlpath.value().c_str(), NULL);
   if (result) {
-    fprintf(stderr, "Couldn't parse manifest XML '%s'\n",
+    fprintf(stdout, "Couldn't parse manifest XML '%s'\n",
             xmlpath.value().c_str());
     result = false;
   }
 
   if (!base::DeleteFile(xmlpath, false)) {
-    fprintf(stderr, "Couldn't delete '%s'\n", xmlpath.value().c_str());
+    fprintf(stdout, "Couldn't delete '%s'\n", xmlpath.value().c_str());
     result = false;
   }
 
   base::FilePath appdir = kApplicationsDir.Append(appid);
   if (!base::DeleteFile(appdir, true)) {
-    fprintf(stderr, "Couldn't delete '%s'\n", appdir.value().c_str());
+    fprintf(stdout, "Couldn't delete '%s'\n", appdir.value().c_str());
     result = false;
   }
 
