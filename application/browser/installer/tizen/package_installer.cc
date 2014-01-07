@@ -82,8 +82,8 @@ bool PackageInstaller::Init() {
   if (!application_->GetManifest()->GetString(info::kIconKey, &icon_name_))
     LOG(WARNING) << "Fail to get application icon name.";
 
-  icon_path_ = base::FilePath(info::kIconDir).AppendASCII(
-      package_id_ + base::FilePath::FromUTF8Unsafe(icon_name_).Extension());
+  // FIXME(vcgomes): Add support for more icon types.
+  icon_path_ = base::FilePath(info::kIconDir).AppendASCII(package_id_ + ".png");
   return true;
 }
 
