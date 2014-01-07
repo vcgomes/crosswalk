@@ -135,7 +135,9 @@ bool PackageInstaller::Install() {
   if (!GeneratePkgInfoXml())
     return false;
 
-  LOG(WARNING) << "icon " << icon_name_;
+  base::FilePath icon = app_dir_.AppendASCII(icon_name_);
+
+  LOG(WARNING) << "icon " << icon.value();
   LOG(WARNING) << "package id " << package_id_;
   LOG(WARNING) << "xml " << xml_path_.value();
 
@@ -143,7 +145,7 @@ bool PackageInstaller::Install() {
   cmdline.AppendSwitch("--install");
   cmdline.AppendArg(package_id_);
   cmdline.AppendArgPath(xml_path_);
-  cmdline.AppendArgPath(icon_path_);
+  cmdline.AppendArgPath(icon);
 
   int exit_code;
   std::string output;
