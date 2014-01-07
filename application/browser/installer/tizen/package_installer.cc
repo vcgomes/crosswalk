@@ -63,9 +63,8 @@ PackageInstaller::PackageInstaller(
 }
 
 bool PackageInstaller::Init() {
-  app_dir_ = data_dir_.Append(info::kAppDir).AppendASCII(package_id_);
-  xml_path_ = base::FilePath(app_dir_).AppendASCII(
-      package_id_ + std::string(info::kXmlExtension));
+  app_dir_ = data_dir_.AppendASCII(info::kAppDir).AppendASCII(package_id_);
+  xml_path_ = data_dir_.AppendASCII(package_id_ + std::string(info::kXmlExtension));
   execute_path_ = app_dir_.Append(info::kExecDir).AppendASCII(package_id_);
 
   application_ = storage_->GetApplicationData(package_id_);
