@@ -135,7 +135,7 @@ bool PackageInstaller::Install() {
   if (!GeneratePkgInfoXml())
     return false;
 
-  base::FilePath icon = app_dir_.AppendASCII("src").AppendASCII(icon_name_);
+  base::FilePath icon = app_dir_.AppendASCII("/src/").AppendASCII(icon_name_);
 
   LOG(WARNING) << "icon " << icon.value();
   LOG(WARNING) << "package id " << package_id_;
