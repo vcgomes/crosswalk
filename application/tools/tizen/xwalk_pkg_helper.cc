@@ -81,16 +81,7 @@ bool InstallApplication(const char* appid, const char* xmlpath,
 
   FileDeleter xml_cleaner(xml_dst, false);
 
-  base::FilePath appdir = kApplicationsDir.Append(appid);
-  if (!file_util::CreateDirectoryAndGetError(appdir, NULL)) {
-    fprintf(stdout, "Couldn't create application directory '%s'\n",
-            appdir.value().c_str());
-    return false;
-  }
-
-  FileDeleter appdir_cleaner(appdir, true);
-
-  base::FilePath applink = appdir.Append("/bin");
+  base::FilePath applink = kApplicationsDir.Append(appid);
   if (!file_util::CreateSymbolicLink(kXWalkLauncherBinary, applink)) {
     fprintf(stdout, "Couldn't create link to Crosswalk '%s'\n",
             applink.value().c_str());
@@ -104,7 +95,6 @@ bool InstallApplication(const char* appid, const char* xmlpath,
 
   icon_cleaner.Dismiss();
   xml_cleaner.Dismiss();
-  appdir_cleaner.Dismiss();
 
   return true;
 }
