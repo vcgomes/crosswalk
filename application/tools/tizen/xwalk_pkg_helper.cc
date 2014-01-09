@@ -153,6 +153,11 @@ int main(int argc, char *argv[]) {
   if (argc <= 2)
     return usage(argv[0]);
 
+  if (setuid(0)) {
+    fprintf(stderr, "Make sure '%s' is set-user-ID-root\n", argv[0]);
+    return 1;;
+  }
+
   if (!strcmp(argv[1], "--install")) {
     if (argc != 5)
       return usage(argv[0]);
