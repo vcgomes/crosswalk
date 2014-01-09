@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     }
 
     // We assume that we are running from a link to the xwalk-launcher binary.
-    appid = strdup(basename(argv[0]));
+    appid = strdup(argv[0]);
   }
 
   fprintf(stderr, "appid %s\n", appid);

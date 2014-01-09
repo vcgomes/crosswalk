@@ -5,6 +5,7 @@
 #include "xwalk/application/browser/linux/running_applications_manager.h"
 
 #include <string>
+#include <libgen.h>
 #include "base/bind.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
@@ -79,6 +80,8 @@ void RunningApplicationsManager::OnLaunch(
     response_sender.Run(response.Pass());
     return;
   }
+
+  LOG(WARNING) << "OnLaunch appid " << app_id;
 
   Application* application = application_service_->Launch(app_id);
   if (!application) {
