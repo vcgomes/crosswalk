@@ -5,7 +5,6 @@
 #include "xwalk/application/browser/linux/running_applications_manager.h"
 
 #include <string>
-#include <libgen.h>
 #include "base/bind.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"

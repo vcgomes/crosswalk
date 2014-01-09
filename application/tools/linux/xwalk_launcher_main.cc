@@ -82,16 +82,15 @@ int main(int argc, char** argv) {
   if (xwalk_tizen_set_home_for_user_app())
     exit(1);
 
-  if (argc >= 2) {
-    appid = argv[1];
-  } else {
-    if (!strcmp(basename(argv[0]), "xwalk-launcher")) {
+  if (!strcmp(basename(argv[0]), "xwalk-launcher")) {
+    if (argc < 2) {
       fprintf(stderr, "No AppID informed, nothing to do\n");
       exit(1);
     }
 
-    // We assume that we are running from a link to the xwalk-launcher binary.
-    appid = strdup(argv[0]);
+    appid = argv[1];
+  } else {
+    appid = strdup(basename(argv[0]));
   }
 
   fprintf(stderr, "appid %s\n", appid);
