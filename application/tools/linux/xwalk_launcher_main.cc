@@ -72,7 +72,7 @@ static void on_app_properties_changed(GDBusProxy* proxy,
 
 int main(int argc, char** argv) {
   GError* error = NULL;
-  const char* appid;
+  char* appid;
 
 #if !GLIB_CHECK_VERSION(2, 36, 0)
   // g_type_init() is deprecated on GLib since 2.36, Tizen has 2.32.
@@ -93,6 +93,8 @@ int main(int argc, char** argv) {
     // We assume that we are running from a link to the xwalk-launcher binary.
     appid = strdup(basename(argv[0]));
   }
+
+  fprintf(stderr, "appid %s\n", appid);
 
   GDBusConnection* connection = get_session_bus_connection(&error);
   if (!connection) {
