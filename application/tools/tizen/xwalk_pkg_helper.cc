@@ -32,7 +32,6 @@ namespace {
 
 const base::FilePath kIconDir("/opt/share/icons/default/small/");
 const base::FilePath kXmlDir("/opt/share/packages/");
-const base::FilePath kApplicationsDir("/opt/usr/apps/applications/");
 const base::FilePath kXWalkLauncherBinary("/usr/bin/xwalk-launcher");
 
 class FileDeleter {
@@ -81,13 +80,6 @@ bool InstallApplication(const char* appid, const char* xmlpath,
 
   FileDeleter xml_cleaner(xml_dst, false);
 
-  base::FilePath applink = kApplicationsDir.Append(appid);
-  if (!file_util::CreateSymbolicLink(kXWalkLauncherBinary, applink)) {
-    fprintf(stdout, "Couldn't create link to Crosswalk '%s'\n",
-            applink.value().c_str());
-    return false;
-  }
-
   if (pkgmgr_parser_parse_manifest_for_installation(xmlpath, NULL)) {
     fprintf(stdout, "Couldn't parse manifest XML '%s'\n", xmlpath);
     return false;
@@ -123,12 +115,6 @@ bool UninstallApplication(const char* appid) {
 
   if (!base::DeleteFile(xmlpath, false)) {
     fprintf(stdout, "Couldn't delete '%s'\n", xmlpath.value().c_str());
-    result = false;
-  }
-
-  base::FilePath appdir = kApplicationsDir.Append(appid);
-  if (!base::DeleteFile(appdir, true)) {
-    fprintf(stdout, "Couldn't delete '%s'\n", appdir.value().c_str());
     result = false;
   }
 

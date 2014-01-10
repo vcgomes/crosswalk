@@ -139,8 +139,9 @@ bool PackageInstaller::Install() {
     return false;
 
   if (!file_util::CreateSymbolicLink(kXWalkLauncherBinary, execute_path_)) {
-
-
+    LOG(ERROR) << "Could not create symbolic link to launcher from "
+               << execute_path_.value();
+    // FIXME(vcgomes): remove XML file.
     return false;
   }
 
@@ -157,7 +158,7 @@ bool PackageInstaller::Install() {
   std::string output;
 
   if (!base::GetAppOutputWithExitCode(cmdline, &output, &exit_code)) {
-    LOG(ERROR) << "Could launch installer helper";
+    LOG(ERROR) << "Could not launch installer helper";
     return false;
   }
 
@@ -171,6 +172,8 @@ bool PackageInstaller::Install() {
 }
 
 bool PackageInstaller::Uninstall() {
+  bool result = true;
+
   CommandLine cmdline(kPkgHelper);
   cmdline.AppendSwitch("--uninstall");
   cmdline.AppendArg(package_id_);
@@ -179,17 +182,22 @@ bool PackageInstaller::Uninstall() {
   std::string output;
 
   if (!base::GetAppOutputWithExitCode(cmdline, &output, &exit_code)) {
-    LOG(ERROR) << "Could launch installer helper";
-    return false;
+    LOG(ERROR) << "Could not launch installer helper";
+    result = false;
   }
 
   if (exit_code != 0) {
     LOG(ERROR) << "Could not uninstall application: "
                << output << " (" << exit_code << ")";
-    return false;
+    result = false;
   }
 
-  return true;
+  if (!base::DeleteFile(app_dir_, true)) {
+    LOG(ERROR) << "Could not remove directory '" << app_dir_.value() << "'";
+    result = false;
+  }
+
+  return result;
 }
 
 }  // namespace application
