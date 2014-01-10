@@ -93,8 +93,6 @@ int main(int argc, char** argv) {
     appid = strdup(basename(argv[0]));
   }
 
-  fprintf(stderr, "appid %s\n", appid);
-
   GDBusConnection* connection = get_session_bus_connection(&error);
   if (!connection) {
     fprintf(stderr, "Couldn't get the session bus connection: %s\n",

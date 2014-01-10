@@ -23,7 +23,9 @@
 
 namespace {
 
-const base::FilePath kPkgHelper("/usr/bin/xwalk-pkg-helper");
+const base::FilePath kPkgHelper("/usr/bin/walk-pkg-helper");
+
+const base::FilePath kXWalkLauncherBinary("/usr/bin/xwalk-launcher");
 
 }
 
@@ -66,8 +68,7 @@ bool PackageInstaller::Init() {
   app_dir_ = data_dir_.AppendASCII(info::kAppDir).AppendASCII(package_id_);
   xml_path_ = data_dir_.AppendASCII(package_id_ +
                                     std::string(info::kXmlExtension));
-  execute_path_ =
-      base::FilePath("/opt/usr/apps/applications/").AppendASCII(package_id_);
+  execute_path_ = app_dir_.AppendASCII("bin/").AppendASCII(package_id_);
 
   application_ = storage_->GetApplicationData(package_id_);
   if (!application_) {
@@ -137,11 +138,14 @@ bool PackageInstaller::Install() {
   if (!GeneratePkgInfoXml())
     return false;
 
-  base::FilePath icon = app_dir_.AppendASCII("src/").AppendASCII(icon_name_);
+  if (!file_util::CreateSymbolicLink(kXWalkLauncherBinary, execute_path_)) {
 
-  LOG(WARNING) << "icon " << icon.value();
-  LOG(WARNING) << "package id " << package_id_;
-  LOG(WARNING) << "xml " << xml_path_.value();
+
+    return false;
+  }
+
+  // FIXME(vcgomes): This assumes that the icon is always located in src/.
+  base::FilePath icon = app_dir_.AppendASCII("src/").AppendASCII(icon_name_);
 
   CommandLine cmdline(kPkgHelper);
   cmdline.AppendSwitch("--install");
