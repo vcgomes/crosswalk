@@ -126,7 +126,7 @@ int usage(const char* program) {
           basename(program));
   fprintf(stdout, "Usage: \n"
           "\t%s --install <appid> <xml> <icon>\n"
-          "\t%s --uinstall <appid>\n",
+          "\t%s --uninstall <appid>\n",
           program, program);
   return 1;
 }
