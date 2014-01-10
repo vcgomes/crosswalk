@@ -27,6 +27,7 @@
 
 #if defined(OS_TIZEN_MOBILE)
 #include "xwalk/application/browser/installer/tizen/package_installer.h"
+#include "xwalk/application/browser/installer/tizen/service_package_installer.h"
 #endif
 
 using xwalk::RuntimeContext;
@@ -132,11 +133,15 @@ void WaitForFinishLoad(
 #if defined(OS_TIZEN_MOBILE)
 bool InstallPackageOnTizen(xwalk::application::ApplicationService* service,
                            xwalk::application::ApplicationStorage* storage,
-                           const std::string& app_id,
+                           xwalk::application::ApplicationData* application,
                            const base::FilePath& data_dir) {
+  if (xwalk::XWalkRunner::GetInstance()->is_running_as_service()) {
+    return InstallApplicationForTizen(application, data_dir);
+  }
+
   scoped_ptr<xwalk::application::PackageInstaller> installer =
       xwalk::application::PackageInstaller::Create(service, storage,
-                                                   app_id, data_dir);
+                                                   application->ID(), data_dir);
   if (!installer || !installer->Install()) {
     LOG(ERROR) << "An error occurred during installation on Tizen.";
     return false;
@@ -146,11 +151,15 @@ bool InstallPackageOnTizen(xwalk::application::ApplicationService* service,
 
 bool UninstallPackageOnTizen(xwalk::application::ApplicationService* service,
                              xwalk::application::ApplicationStorage* storage,
-                             const std::string& app_id,
+                             xwalk::application::ApplicationData* application,
                              const base::FilePath& data_dir) {
+  if (xwalk::XWalkRunner::GetInstance()->is_running_as_service()) {
+    return UninstallPackageForTizen(application, data_dir);
+  }
+
   scoped_ptr<xwalk::application::PackageInstaller> installer =
       xwalk::application::PackageInstaller::Create(service, storage,
-                                                   app_id, data_dir);
+                                                   application->ID(), data_dir);
   if (!installer || !installer->Uninstall()) {
     LOG(ERROR) << "An error occurred during uninstallation on Tizen.";
     return false;
@@ -240,7 +249,7 @@ bool ApplicationService::Install(const base::FilePath& path, std::string* id) {
 
 #if defined(OS_TIZEN_MOBILE)
   if (!InstallPackageOnTizen(this, application_storage_,
-                             application_data->ID(),
+                             application_data.get(),
                              runtime_context_->GetPath())) {
     application_storage_->RemoveApplication(application_data->ID());
     return false;
